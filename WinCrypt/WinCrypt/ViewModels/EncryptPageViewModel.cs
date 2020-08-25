@@ -1,13 +1,13 @@
 ﻿namespace WinCrypt
 {
+    // Required namespaces >>
     using System;
     using System.IO;
-    using System.Security.Cryptography;
     using System.Text;
-    using System.Threading.Tasks;
-    // Required namespaces >>
     using System.Windows.Input;
+    using System.Security.Cryptography;
     using static CryptographyHelpers;
+    using System.Threading.Tasks;
 
     /// <summary>
     /// ViewModel for the <see cref="EncryptFileAES(string, byte[], bool)"/>
@@ -92,6 +92,27 @@
         #region Private methods
 
         /// <summary>
+        /// Handles the received cryptographic result
+        /// </summary>
+        /// <param name="dr"></param>
+        private async void HandleEncryptResult(CryptographicResult dr)
+        {
+            // If there was an error
+            if (!dr.OK)
+            {
+
+            }
+            // Exit if there was no problems
+            else
+            {
+                // Wait 1 second before exiting
+                await Task.Run(() => Task.Delay(1000));
+                // Exit the application
+                Environment.Exit(0);
+            }
+        }
+
+        /// <summary>
         /// Should be called in the constructor,
         /// Function will create all commands for the <see cref="EncryptPage"/>
         /// </summary>
@@ -115,12 +136,12 @@
                 // Create hasher for the password
                 SHA256 Hasher = SHA256.Create();
                 // Encrypt the file
-                await EncryptFileAES(OriginalFileName, @$"{CurrentFilePath}\{CurrentFileName}{fi.Extension}",
+                var result = await EncryptFileAES(OriginalFileName, @$"{CurrentFilePath}\{CurrentFileName}{fi.Extension}",
                     Hasher.ComputeHash(Encoding.Default.GetBytes(EncryptionPassword)), DeleteOriginalFile);
 
-                // Exit the program after encryption
-                Environment.Exit(0);
-            }, (b) => { return (!String.IsNullOrWhiteSpace(CurrentFileName) && !String.IsNullOrWhiteSpace(EncryptionPassword)); });
+                // Handle the recieved result
+                HandleEncryptResult(result);
+            });
         }
 
         /// <summary>

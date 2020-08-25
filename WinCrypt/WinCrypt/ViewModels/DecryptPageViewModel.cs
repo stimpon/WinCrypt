@@ -7,6 +7,7 @@
     using System.Text;
     using System;
     using static CryptographyHelpers;
+    using System.Threading.Tasks;
 
     /// <summary>
     /// ViewModel for the <see cref="MainPage"/>
@@ -99,6 +100,8 @@
                 // Encrypt the file
                 var res = await DecryptFileAES(CurrentFile,
                             Hasher.ComputeHash(Encoding.Default.GetBytes(DecryptionPassword)));
+
+                // Handle the recieved result
                 HandleDecryptResult(res);
             });
         }
@@ -107,7 +110,7 @@
         /// Handles the received cryptographic result
         /// </summary>
         /// <param name="dr"></param>
-        private void HandleDecryptResult(CryptographicResult dr)
+        private async void HandleDecryptResult(CryptographicResult dr)
         {
             // If there was an error
             if (!dr.OK)
@@ -118,15 +121,21 @@
                     // Print out message depending on what the error is
 
                     ErrorTypes.WrongDecryptionKey => "Invalid decryption key or corrupted file",
-                    ErrorTypes.FileNotFound       => "Could not find file: " + CurrentFile,
-                    ErrorTypes.DirectoryNotFound  => "Directory does not exist: " + CurrentFile,
+                    ErrorTypes.FileNotFound => "Could not find file: " + CurrentFile,
+                    ErrorTypes.DirectoryNotFound => "Directory does not exist: " + CurrentFile,
                     _ => String.Empty
                 };
                 // Turn off decryption mode
                 Idling = true;
             }
             // Exit if there was no problems
-            else Environment.Exit(0);
+            else 
+            {
+                // Wait 1 second before exiting
+                await Task.Run(() => Task.Delay(1000));
+                // Exit the application
+                Environment.Exit(0);
+            }
         }
 
         /// <summary>

@@ -124,7 +124,7 @@
                             await Stream.WriteAsync(bytes);
 
                             // Call update event
-                            EncryptionProgress(null, Writer.Length);
+                            EncryptionProgress(null, Writer.Length - 32);
                         }
                     }
                     // If the original file should be deleted...
@@ -197,7 +197,7 @@
                         using (CryptoStream Stream = new CryptoStream(Writer, AES.CreateDecryptor(), CryptoStreamMode.Write))
                         {
                             // Send decryption message
-                            DecryptionInfo(null, "Decrypting");
+                            DecryptionInfo(null, "Decrypting...");
 
                             // Keep reading bytes until the end of the file is hit
                             while (Reader.Position != Reader.Length)

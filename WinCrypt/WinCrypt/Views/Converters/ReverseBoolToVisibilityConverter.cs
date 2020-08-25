@@ -8,7 +8,7 @@
     /// <summary>
     /// Converts a boolean value to a <see cref="System.Windows.Visibility"/>
     /// </summary>
-    public class BoolToVisibilityConverter : BaseValueConverter<BoolToVisibilityConverter>
+    public class ReverseBoolToVisibilityConverter : BaseValueConverter<ReverseBoolToVisibilityConverter>
     {
         /// <summary>
         /// Converts a boolean value and returns a <see cref="System.Windows.Visibility"/>
@@ -27,10 +27,10 @@
             return ((bool)value) switch
             {
                 // Return Visible if value is true
-                true => Visibility.Visible,
+                true => Visibility.Hidden,
 
                 // Return Hidden if value is false
-                false => Visibility.Hidden
+                false => Visibility.Visible
             };
         }
 

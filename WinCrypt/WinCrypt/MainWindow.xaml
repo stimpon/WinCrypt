@@ -6,9 +6,9 @@
         xmlns:local="clr-namespace:WinCrypt"
         mc:Ignorable="d"
         WindowStartupLocation="CenterScreen"
-        Title="WinCrypt" Height="425" Width="425" IsTabStop="False">
+        Title="WinCrypt" Height="440" Width="425" IsTabStop="False">
 
-    <Border Padding="5" Background="#FFCBCBCB">
+    <Border Padding="5" Background="#FFD4D4D4">
         <Border Background="White">
             <Frame Content="{Binding ApplicationViewModel.CurrentPage, 
             Source={x:Static local:Container.Instance}, 

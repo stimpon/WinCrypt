@@ -64,6 +64,8 @@
             </GroupBox>
         </Border>
 
+        <Border Grid.Row="3" Background="#FFF0F0F0" Margin="0,10,0,0" Grid.RowSpan="2"/>
+
         <StackPanel Grid.Row="3">
             <TextBlock Width="350" Height="16" VerticalAlignment="Bottom" Margin="0,10,0,0"><Run Language="sv-se" Text="De"/><Run Text="cryption "/><Run Text="key"/></TextBlock>
             <!-- File path and name textbox-->
@@ -76,7 +78,18 @@
                 Width="350" Height="25" VerticalAlignment="Bottom"
                 Command="{Binding DecryptCommand}" IsEnabled="{Binding Idling}"/>
 
-        <ProgressBar Grid.Row="6" Height="25" Width="350" Value="{Binding DecryptedBytes}" Maximum="{Binding FileSize}" Minimum="0" Margin="0,0,0,10"  BorderBrush="#FFF0F0F0" Background="#FFFBFBFB"/>
+        <ProgressBar Grid.Row="6" Height="25" Width="350" Value="{Binding DecryptedBytes}" Maximum="{Binding FileSize}" Minimum="0"
+                     Margin="0,10,0,0"  BorderBrush="#FFF0F0F0" Background="#FFFBFBFB"/>
+        
+        <Border Grid.Row="6" Margin="0,10,10,0" Height="25" Width="340" VerticalAlignment="Center">
+            <TextBlock  Width="340" TextAlignment="Right" 
+                        Visibility="{Binding Idling, Converter={local:ReverseBoolToVisibilityConverter}}"
+                        VerticalAlignment="Center" FontFamily="Consolas" FontSize="12">
+            <Run Text="{Binding DecryptedBytes}"/><Run Text="b"/>
+            <Run Text="/"/>
+            <Run Text="{Binding FileSize}"/><Run Text="b"/>
+            </TextBlock>
+        </Border>
 
     </Grid>
 </local:StaticBasePage>
