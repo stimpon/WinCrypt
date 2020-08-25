@@ -1,0 +1,92 @@
+﻿<local:StaticBasePage 
+    x:TypeArguments="local:EncryptPageViewModel"
+    x:Class="WinCrypt.EncryptPage"  
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+        xmlns:local="clr-namespace:WinCrypt"
+        mc:Ignorable="d" Background="White"
+        d:DesignHeight="400" d:DesignWidth="400"
+        Width="400" Height="400"
+        Title="EncryptFile">
+    <Grid>
+
+        <Grid.RowDefinitions>
+            <RowDefinition Height="50"/>
+            <RowDefinition Height="90"/>
+            <RowDefinition Height="90"/>
+            <RowDefinition Height="50"/>
+            <RowDefinition Height="20"/>
+            <RowDefinition Height="30"/>
+            <RowDefinition Height="50"/>
+        </Grid.RowDefinitions>
+
+        <StackPanel>
+            <TextBlock Text="File name" VerticalAlignment="Bottom" Width="350" HorizontalAlignment="Center" Margin="0,10,0,0"/>
+            <!-- File path and name textbox-->
+            <TextBox Height="20" Width="350" HorizontalAlignment="Center"
+                 Text="{Binding CurrentFileName, Mode=TwoWay}"
+                 Grid.Row="1" TabIndex="0"/>
+        </StackPanel>
+
+        <Border Grid.Row="1" Background="#FFF0F0F0" Margin="0,10,0,10">
+            <GroupBox Header="Encryption algorithm" Height="80" Width="350" BorderThickness="0" Background="Transparent">
+                <Grid Margin="10">
+                    <Grid.RowDefinitions>
+                        <RowDefinition/>
+                        <RowDefinition/>
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition/>
+                        <ColumnDefinition/>
+                        <ColumnDefinition/>
+                        <ColumnDefinition/>
+                    </Grid.ColumnDefinitions>
+                    <!-- Algorithms-->
+                    <RadioButton Content="AES 256" IsChecked="True" Grid.Row="0" VerticalAlignment="Center" TabIndex="1"/>
+                    <RadioButton Content="RSA" Grid.Row="1" VerticalAlignment="Center" IsEnabled="False"/>
+                    <RadioButton Content="TrippleDES" Grid.Row="0" Grid.Column="1" VerticalAlignment="Center" IsEnabled="False"/>
+                </Grid>
+            </GroupBox>
+        </Border>
+
+        <Border Grid.Row="2" Background="#FFF0F0F0" Margin="0,10,0,10">
+            <GroupBox Width="350" HorizontalAlignment="Center" Header="Options" Height="80" VerticalAlignment="Center" BorderThickness="0" Background="Transparent">
+                <Grid Margin="10">
+                    <Grid.RowDefinitions>
+                        <RowDefinition/>
+                        <RowDefinition/>
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition/>
+                    </Grid.ColumnDefinitions>
+                    <!-- Algorithms-->
+                    <CheckBox Content="Delete the original file(s) after encryption" IsChecked="{Binding DeleteOriginalFile, Mode=TwoWay}" Grid.Row="0" VerticalAlignment="Center" TabIndex="2"/>
+                    <CheckBox Content="Integrate IV in encrypted file" IsChecked="True" Grid.Row="1" VerticalAlignment="Center" IsEnabled="False"/>
+                </Grid>
+            </GroupBox>
+        </Border>
+
+        <StackPanel Grid.Row="3">
+            <TextBlock Width="350" Height="16" VerticalAlignment="Bottom" Margin="0,10,0,0"><Run Text="Encryption "/><Run Language="sv-se" Text="key"/></TextBlock>
+            <!-- File path and name textbox-->
+            <TextBox IsReadOnly="False" Grid.Row="1" Width="350" Height="20" VerticalAlignment="Center" Text="{Binding EncryptionPassword, Mode=TwoWay}" TabIndex="3" Background="White">
+                <TextBox.InputBindings>
+                    <KeyBinding Key="Return" Command="{Binding EncryptCommand}"/>
+                </TextBox.InputBindings>
+            </TextBox>
+        </StackPanel>
+
+        <TextBlock Grid.Row="4" Width="350" Foreground="Black" Text="{Binding EncryptionInformation}" TextAlignment="Right" FontFamily="Consolas" FontSize="12" VerticalAlignment="Center"/>
+
+        <Button Grid.Row="5" Background="#FFF0F0F0" Content="Encrypt" 
+                Width="350" Height="25" VerticalAlignment="Bottom"
+                Command="{Binding EncryptCommand}" IsTabStop="False"
+                IsEnabled="{Binding Idling}"/>
+
+        <ProgressBar Grid.Row="6" Height="25" Width="350" Value="{Binding EncryptedBytes}" Maximum="{Binding FileSize}" Minimum="0" 
+                     Margin="0,10,0,0" BorderBrush="#FFF0F0F0" Background="#FFFBFBFB" IsTabStop="False"/>
+
+    </Grid>
+</local:StaticBasePage>
