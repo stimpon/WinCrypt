@@ -90,7 +90,7 @@
                     using (CryptoStream Stream = new CryptoStream(Writer, AES.CreateEncryptor(), CryptoStreamMode.Write))
                     {
                         // Send encryption information
-                        EncryptionInfo(null, "Calculating MD5 checksum...");
+                        EncryptionInfo(null, "Computing MD5 checksum...");
 
                         // Calculate the MD5 checksum of the file
                         var Checksum = await Task.Run(() => {

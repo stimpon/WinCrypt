@@ -8,7 +8,7 @@
         WindowStartupLocation="CenterScreen"
         Title="WinCrypt" Height="440" Width="425" IsTabStop="False">
 
-    <Border Padding="5" Background="#FFD4D4D4">
+    <Border Padding="3,0,3,3" Background="#FFD4D4D4">
         <Border Background="White">
             <Frame Content="{Binding ApplicationViewModel.CurrentPage, 
             Source={x:Static local:Container.Instance}, 

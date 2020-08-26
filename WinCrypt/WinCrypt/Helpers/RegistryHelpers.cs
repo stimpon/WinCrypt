@@ -21,15 +21,15 @@
                 #region Check keys
 
                 // Get the registry subkey for the this program
-                RegistryKey keyWIN = Registry.ClassesRoot.OpenSubKey("WinCrypt");
+                RegistryKey keyWIN = Registry.ClassesRoot.OpenSubKey("WinCrypt");               
                 // Get the registry subkey for the encrypted file extension
                 RegistryKey keyENC = Registry.ClassesRoot.OpenSubKey(".encrypted");
                 // Get registry subkey for the Encrypt command
-                RegistryKey keyCOM = Registry.ClassesRoot.OpenSubKey(@"*\shell", true).OpenSubKey("Encrypt");
+                RegistryKey keyCOM = Registry.ClassesRoot.OpenSubKey(@"*\shell", RegistryKeyPermissionCheck.ReadSubTree).OpenSubKey("Encrypt");
 
                 #endregion
 
-                // Check if any keys are null
+                // If any of the registry keys don't exist...
                 if (keyWIN == null || keyENC == null || keyCOM == null)
                 {
                     // Ask user if he/she wants to add the registry keys right now
@@ -46,7 +46,7 @@
                             // Then create the registry key
                             var subKey1 = Registry.ClassesRoot.CreateSubKey("WinCrypt");
                             // Set default icon
-                            subKey1.CreateSubKey("DefaultIcon").SetValue("", Directory.GetCurrentDirectory() + @"\WinCrypt.exe,0");
+                            subKey1.CreateSubKey("DefaultIcon").SetValue(String.Empty, Directory.GetCurrentDirectory() + @"\WinCrypt.exe,0");
 
                             // Create shell command
                             var shellKey = subKey1.CreateSubKey("shell").CreateSubKey("Decrypt");
@@ -55,12 +55,12 @@
                             // Set command icon
                             shellKey.SetValue("Icon", Directory.GetCurrentDirectory() + @"\WinCrypt.exe,0");
                             // Create command
-                            shellKey.CreateSubKey("Command").SetValue("", @"""" + Directory.GetCurrentDirectory() + @"\WinCrypt.exe"" ""%1"" ""1""");
+                            shellKey.CreateSubKey("Command").SetValue(String.Empty, @"""" + Directory.GetCurrentDirectory() + @"\WinCrypt.exe"" ""%1"" ""1""");
 
                             // Create the .encrypted file extension registry key
                             var subKey2 = Registry.ClassesRoot.CreateSubKey(".encrypted");
                             // Accosiate the .encrypted file extension with this program
-                            subKey2.SetValue("", "WinCrypt");
+                            subKey2.SetValue(String.Empty, "WinCrypt");
 
                             // Create the encrypt key
                             var subKey3 = Registry.ClassesRoot.OpenSubKey(@"*\shell", true).CreateSubKey("Encrypt");
@@ -69,7 +69,7 @@
                             // Create command
                             var subsubkey = subKey3.CreateSubKey("Command");
                             // Set command value
-                            subsubkey.SetValue("", @"""" + Directory.GetCurrentDirectory() + @"\WinCrypt.exe"" ""%1"" ""0""");
+                            subsubkey.SetValue(String.Empty, @"""" + Directory.GetCurrentDirectory() + @"\WinCrypt.exe"" ""%1"" ""0""");
                             #endregion
 
                             break;
@@ -102,20 +102,21 @@
                     // If WinCrypt exist
                     if (key.OpenSubKey("WinCrypt") != null) 
                         // Delete the Registry Key
-                        key.DeleteSubKeyTree("WinCrypt");
+                        key.DeleteSubKeyTree("WinCrypt", false);
                     // If .encrypted exist
                     if (key.OpenSubKey(".encrypted") != null)
                         // Delete the Registry Key
-                        key.DeleteSubKeyTree(".encrypted");
+                        key.DeleteSubKey(".encrypted", false);
                     // If Encrypt key exist
-                    if (key.OpenSubKey(@"*\shell\Encrypt") != null)
+                    if (key.OpenSubKey(@"*\shell", RegistryKeyPermissionCheck.ReadSubTree).OpenSubKey("Encrypt") != null)
                         // Delete the Registry Key
-                        key.DeleteSubKeyTree(@"*\shell\Encrypt");
+                        key.OpenSubKey(@"*\shell", RegistryKeyPermissionCheck.ReadWriteSubTree).DeleteSubKeyTree("Encrypt", false);
                 }
             }
             // If it fails
             catch (Exception ex)
             {
+                MessageBox.Show(ex.Message);
                 // If cleanup failed, thrown an exception containing the exception message
                 throw new Exception($"Cleanup failed: {ex.Message}");
             }
