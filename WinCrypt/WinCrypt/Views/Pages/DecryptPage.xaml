@@ -8,7 +8,8 @@
       xmlns:local="clr-namespace:WinCrypt"
       mc:Ignorable="d" 
       d:DesignHeight="400" d:DesignWidth="400"
-      Title="DecryptPage">
+      Title="DecryptPage"
+      x:Name="Page">
     <Grid Background="White">
         <Grid.RowDefinitions>
             <RowDefinition Height="50"/>
@@ -69,14 +70,14 @@
         <StackPanel Grid.Row="3">
             <TextBlock Width="350" Height="16" VerticalAlignment="Bottom" Margin="0,10,0,0"><Run Language="sv-se" Text="De"/><Run Text="cryption "/><Run Text="key"/></TextBlock>
             <!-- File path and name textbox-->
-            <TextBox IsReadOnly="False" Grid.Row="1" Width="350" Height="20" VerticalAlignment="Center" Text="{Binding DecryptionPassword, Mode=TwoWay}"/>
+            <PasswordBox x:Name="PbPassword" Grid.Row="1" Width="350" Height="20" VerticalAlignment="Center"/>
         </StackPanel>
 
         <TextBlock Grid.Row="4" Text="{Binding DecryptionInformation}" Width="350" Foreground="Black" TextAlignment="Right" FontFamily="Consolas" FontSize="12" VerticalAlignment="Center"/>
 
         <Button Grid.Row="5" Background="#FFF0F0F0" Content="Decrypt" 
                 Width="350" Height="25" VerticalAlignment="Bottom"
-                Command="{Binding DecryptCommand}" IsEnabled="{Binding Idling}"/>
+                Command="{Binding DecryptCommand}" CommandParameter="{Binding ElementName=Page}" IsEnabled="{Binding Idling}"/>
 
         <ProgressBar Grid.Row="6" Height="25" Width="350" Value="{Binding DecryptedBytes}" Maximum="{Binding FileSize}" Minimum="0"
                      Margin="0,10,0,0"  BorderBrush="#FFF0F0F0" Background="#FFFBFBFB"/>

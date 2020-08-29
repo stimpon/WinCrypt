@@ -3,7 +3,9 @@
     // Required namespaces
     using System;
     using System.IO;
+    using System.Security;
     using System.Security.Cryptography;
+    using System.Text;
     using System.Threading.Tasks;
     using System.Windows;
 
@@ -50,6 +52,22 @@
         #region Functions
 
         /// <summary>
+        /// Hashes a secure string using the Sha 256 algorithm and returns the bytes
+        /// </summary>
+        /// <param name="password"></param>
+        /// <returns></returns>
+        public static byte[] HashSecureStringSHA256(SecureString password)
+        {
+            // Create a new hasher
+            using (SHA256 Hasher = SHA256.Create())
+            {
+                // Get the string from the secure string and hash it, finaly return it
+                return Hasher.ComputeHash(Encoding.Default.GetBytes(password.ToUnsecureString()));
+            }
+                 
+        }
+
+        /// <summary>
         /// Encrypt the specified file
         /// </summary>
         /// <param name="filePath">Path to the file</param>
@@ -59,9 +77,8 @@
         public static async Task<CryptographicResult> EncryptFileAES(
             string filePath, 
             string newFilePath,
-            byte[] pass, 
-            bool DeleteOriginalFile = true)
-        {
+            SecureString pass, 
+            bool DeleteOriginalFile = true) {
             // Try to encrypt the file
             try
             {
@@ -77,11 +94,10 @@
                 {                 
                     // Set Aes properties
                     AES.KeySize = 256;
-                    AES.Mode = CipherMode.CBC;
+                    AES.Mode    = CipherMode.CBC;
                     AES.Padding = PaddingMode.PKCS7;
-                    AES.Key = pass;
-                    AES.IV = IV;
-
+                    AES.Key = HashSecureStringSHA256(pass);
+                    AES.IV  = IV;
                     // Create the new file string
                     string newFile = @$"{newFilePath}.encrypted";                
 
@@ -161,9 +177,8 @@
         /// <param name="encryptionIV">The full filepath to the encryption iv.</param>
         public static async Task<CryptographicResult> DecryptFileAES(
             string filePath, 
-            byte[] pass, bool 
-            DeleteOriginalFile = true)
-        {
+            SecureString pass,
+            bool DeleteOriginalFile = true) {
             // If this is not empty in a catch then the file was created so remove it
             string newFile = String.Empty;
 
@@ -174,10 +189,10 @@
                 {
                     // Set Aes properties
                     AES.KeySize = 256;
-                    AES.Mode = CipherMode.CBC;
+                    AES.Mode    = CipherMode.CBC;
                     AES.Padding = PaddingMode.PKCS7;
-                    AES.Key = pass;
-                    AES.IV = new byte[16];
+                    AES.Key = HashSecureStringSHA256(pass);
+                    AES.IV  = new byte[16];
 
                     using (FileStream Reader = new FileStream(filePath, FileMode.Open, FileAccess.Read))
                     {
@@ -247,7 +262,7 @@
                 return new CryptographicResult();
             }
             // If decryption fails...
-            catch (CryptographicException)
+            catch (CryptographicException E)
             {
                 // Delete the created file
                 if (!String.IsNullOrEmpty(newFile)) File.Delete(newFile);

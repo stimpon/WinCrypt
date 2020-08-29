@@ -27,11 +27,6 @@
         public bool DeleteOriginalFile { get; set; } = true;
 
         /// <summary>
-        /// Password for the file
-        /// </summary>
-        public string DecryptionPassword { get; set; }
-
-        /// <summary>
         /// Tells the view how big the opened file is
         /// </summary>
         public long FileSize { get; set; } = 1;
@@ -74,6 +69,31 @@
             }
         }
 
+        #region Command functions
+
+        /// <summary>
+        /// Function for the <see cref="DecryptCommand"/> command
+        /// </summary>
+        /// <param name="o"></param>
+        private async void DecryptFile(object o)
+        {
+            // Turn on decryption mode
+            Idling = false;
+
+            // Set the file size
+            FileSize = new FileInfo(CurrentFile).Length;
+
+            // Create hasher for the password
+            SHA256 Hasher = SHA256.Create();
+            // Encrypt the file
+            var res = await DecryptFileAES(CurrentFile, ((IHavePassword)o).Password);
+
+            // Handle the recieved result
+            HandleDecryptResult(res);
+        }
+
+        #endregion
+
         #region Private methods
 
         /// <summary>
@@ -86,24 +106,8 @@
             DecryptionProgress += DecryptPageViewModel_DecryptionProgress;
             DecryptionInfo += DecryptPageViewModel_DecryptionInfo;
 
-            // Create the encrypt command
-            DecryptCommand = new RelayCommand(async () =>
-            {
-                // Turn on decryption mode
-                Idling = false;
-
-                // Set the file size
-                FileSize = new FileInfo(CurrentFile).Length;
-
-                // Create hasher for the password
-                SHA256 Hasher = SHA256.Create();
-                // Encrypt the file
-                var res = await DecryptFileAES(CurrentFile,
-                            Hasher.ComputeHash(Encoding.Default.GetBytes(DecryptionPassword)));
-
-                // Handle the recieved result
-                HandleDecryptResult(res);
-            });
+            // Create and bind the Decrypt command to it's function
+            DecryptCommand = new ParameterizedRelayCommand(DecryptFile);
         }
 
         /// <summary>

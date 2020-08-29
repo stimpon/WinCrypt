@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Security;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
@@ -16,11 +17,16 @@ namespace WinCrypt
     /// <summary>
     /// Interaction logic for DecryptPage.xaml
     /// </summary>
-    public partial class DecryptPage : StaticBasePage<DecryptPageViewModel>
+    public partial class DecryptPage : StaticBasePage<DecryptPageViewModel>, IHavePassword
     {
         public DecryptPage()
         {
             InitializeComponent();
         }
+
+        /// <summary>
+        /// The decryption key
+        /// </summary>
+        public SecureString Password { get => PbPassword.SecurePassword; }
     }
 }

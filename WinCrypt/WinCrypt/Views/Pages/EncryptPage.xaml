@@ -9,7 +9,8 @@
         mc:Ignorable="d" Background="White"
         d:DesignHeight="400" d:DesignWidth="400"
         Width="400" Height="400"
-        Title="EncryptFile">
+        Title="EncryptFile"
+        x:Name="Page">
     <Grid>
 
         <Grid.RowDefinitions>
@@ -74,18 +75,15 @@
         <StackPanel Grid.Row="3">
             <TextBlock Width="350" Height="16" VerticalAlignment="Bottom" Margin="0,10,0,0"><Run Text="Encryption "/><Run Language="sv-se" Text="key"/></TextBlock>
             <!-- File path and name textbox-->
-            <TextBox IsReadOnly="False" Grid.Row="1" Width="350" Height="20" VerticalAlignment="Center" Text="{Binding EncryptionPassword, Mode=TwoWay}" TabIndex="3" Background="White">
-                <TextBox.InputBindings>
-                    <KeyBinding Key="Return" Command="{Binding EncryptCommand}"/>
-                </TextBox.InputBindings>
-            </TextBox>
+            <PasswordBox x:Name="PbPassword" Grid.Row="1" Width="350" Height="20" VerticalAlignment="Center" TabIndex="3" Background="White">
+            </PasswordBox>
         </StackPanel>
 
         <TextBlock Grid.Row="4" Width="350" Foreground="Black" Text="{Binding EncryptionInformation}" TextAlignment="Right" FontFamily="Consolas" FontSize="12" VerticalAlignment="Center"/>
 
         <Button Grid.Row="5" Background="#FFF0F0F0" Content="Encrypt" 
                 Width="350" Height="25" VerticalAlignment="Bottom"
-                Command="{Binding EncryptCommand}" IsTabStop="False"
+                Command="{Binding EncryptCommand}" CommandParameter="{Binding ElementName=Page}" IsTabStop="False"
                 IsEnabled="{Binding Idling}"/>
 
         <ProgressBar Grid.Row="6" Height="25" Width="350" Value="{Binding EncryptedBytes}" Maximum="{Binding FileSize}" Minimum="0" 

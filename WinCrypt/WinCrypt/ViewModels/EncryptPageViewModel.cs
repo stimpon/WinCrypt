@@ -8,6 +8,7 @@
     using System.Security.Cryptography;
     using static CryptographyHelpers;
     using System.Threading.Tasks;
+    using System.Windows;
 
     /// <summary>
     /// ViewModel for the <see cref="EncryptFileAES(string, byte[], bool)"/>
@@ -44,11 +45,6 @@
         /// Set to true if the original file should be kept after encryption
         /// </summary>
         public bool DeleteOriginalFile { get; set; } = false;
-
-        /// <summary>
-        /// Password for the file
-        /// </summary>
-        public string EncryptionPassword { get; set; }
 
         /// <summary>
         /// Tells the view how big the opened file is
@@ -89,7 +85,48 @@
             }
         }
 
+        #region Command functions
+
+        /// <summary>
+        /// Function for the <see cref="EncryptCommand"/> command
+        /// </summary>
+        /// <param name="o">an object that implements <see cref="IHavePassword"/></param>
+        private async void EncryptFile(object o)
+        {
+            // Turn on encryption mode
+            Idling = false;
+
+            // Get info about the file
+            FileInfo fi = new FileInfo(OriginalFileName);
+            // Set file length
+            FileSize = fi.Length;
+
+            // Encrypt the file
+            var result = 
+                await EncryptFileAES(OriginalFileName, @$"{CurrentFilePath}\{CurrentFileName}{fi.Extension}",
+                ((IHavePassword)o).Password, DeleteOriginalFile);
+
+            // Handle the recieved result
+            HandleEncryptResult(result);
+        }
+
+        #endregion
+
         #region Private methods
+
+        /// <summary>
+        /// Should be called in the constructor,
+        /// Function will create all commands for the <see cref="EncryptPage"/>
+        /// </summary>
+        private void Init()
+        {
+            // Subscribe to events
+            EncryptionProgress += EncryptPageViewModel_EncryptionProgress;
+            EncryptionInfo     += EncryptPageViewModel_EncryptionInfo;
+
+            // Bind the encrypt command to it's function
+            EncryptCommand = new ParameterizedRelayCommand(EncryptFile);
+        }
 
         /// <summary>
         /// Handles the received cryptographic result
@@ -110,38 +147,6 @@
                 // Exit the application
                 Environment.Exit(0);
             }
-        }
-
-        /// <summary>
-        /// Should be called in the constructor,
-        /// Function will create all commands for the <see cref="EncryptPage"/>
-        /// </summary>
-        private void Init()
-        {
-            // Subscribe to important events
-            EncryptionProgress += EncryptPageViewModel_EncryptionProgress;
-            EncryptionInfo += EncryptPageViewModel_EncryptionInfo;
-
-            // Create the encrypt command
-            EncryptCommand = new RelayCommand(async () => 
-            {
-                // Turn on encryption mode
-                Idling = false;
-
-                // Get info about the file
-                FileInfo fi = new FileInfo(OriginalFileName);
-                // Set file length
-                FileSize = fi.Length;
-
-                // Create hasher for the password
-                SHA256 Hasher = SHA256.Create();
-                // Encrypt the file
-                var result = await EncryptFileAES(OriginalFileName, @$"{CurrentFilePath}\{CurrentFileName}{fi.Extension}",
-                    Hasher.ComputeHash(Encoding.Default.GetBytes(EncryptionPassword)), DeleteOriginalFile);
-
-                // Handle the recieved result
-                HandleEncryptResult(result);
-            });
         }
 
         /// <summary>
