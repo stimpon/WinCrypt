@@ -37,5 +37,10 @@ public enum ErrorTypes
     /// <summary>
     /// Directory does not exist
     /// </summary>
-    DirectoryNotFound
+    DirectoryNotFound,
+
+    /// <summary>
+    /// If the operation was canceled
+    /// </summary>
+    OperationCanceled
 }

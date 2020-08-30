@@ -9,6 +9,7 @@
     using static CryptographyHelpers;
     using System.Threading.Tasks;
     using System.Windows;
+    using System.Threading;
 
     /// <summary>
     /// ViewModel for the <see cref="EncryptFileAES(string, byte[], bool)"/>
@@ -36,6 +37,10 @@
 
         #endregion
 
+        /// <summary>
+        /// Is the program encrypting a file right now?
+        /// </summary>
+        public bool IsEncrypting { get; set; } = false;
         /// <summary>
         /// Tells the View if a file is being encrypted right now
         /// </summary>
@@ -68,7 +73,14 @@
         /// <summary>
         /// Command for encrypting the file
         /// </summary>
-        public ICommand EncryptCommand { get; set; }
+        public ICommand EncryptCancelCommand { get; set; }
+
+        #endregion
+
+        #region Private members
+
+        // Create a cancellationToken for the encryption
+        private CancellationTokenSource Token;
 
         #endregion
 
@@ -88,26 +100,44 @@
         #region Command functions
 
         /// <summary>
-        /// Function for the <see cref="EncryptCommand"/> command
+        /// Function for the <see cref="EncryptCancelCommand"/> command
         /// </summary>
         /// <param name="o">an object that implements <see cref="IHavePassword"/></param>
-        private async void EncryptFile(object o)
+        private async void EncryptCancelCommand_Function(object o)
         {
-            // Turn on encryption mode
-            Idling = false;
+            // If not encrypting...
+            if (!IsEncrypting)
+            {
+                // Turn on encryption mode
+                IsEncrypting = true;
 
-            // Get info about the file
-            FileInfo fi = new FileInfo(OriginalFileName);
-            // Set file length
-            FileSize = fi.Length;
+                // Get info about the file
+                FileInfo fi = new FileInfo(OriginalFileName);
+                // Set file length
+                FileSize = fi.Length;
 
-            // Encrypt the file
-            var result = 
-                await EncryptFileAES(OriginalFileName, @$"{CurrentFilePath}\{CurrentFileName}{fi.Extension}",
-                ((IHavePassword)o).Password, DeleteOriginalFile);
+                // Create a new instance of the cancellation token
+                Token = new CancellationTokenSource();
 
-            // Handle the recieved result
-            HandleEncryptResult(result);
+                // Encrypt the file
+                var result =
+                    await EncryptFileAsync(OriginalFileName, @$"{CurrentFilePath}\{CurrentFileName}{fi.Extension}",
+                    ((IHavePassword)o).Password, DeleteOriginalFile, Token.Token);
+
+                // Handle the recieved result
+                HandleEncryptResult(result);
+            }
+            // Else...
+            else
+            {
+                Idling = false;
+
+                // Show the user that the encryption process is canceling
+                EncryptionInformation = "Canceling...";
+
+                // Cancel the encryption
+                Token.Cancel();
+            }
         }
 
         #endregion
@@ -125,7 +155,7 @@
             EncryptionInfo     += EncryptPageViewModel_EncryptionInfo;
 
             // Bind the encrypt command to it's function
-            EncryptCommand = new ParameterizedRelayCommand(EncryptFile);
+            EncryptCancelCommand = new ParameterizedRelayCommand(EncryptCancelCommand_Function);
         }
 
         /// <summary>
@@ -137,7 +167,14 @@
             // If there was an error
             if (!dr.OK)
             {
-
+                switch (dr.Error)
+                {
+                    // Return to idling state
+                    case ErrorTypes.OperationCanceled: 
+                        Idling = true;
+                        IsEncrypting = false;
+                        break;
+                }
             }
             // Exit if there was no problems
             else

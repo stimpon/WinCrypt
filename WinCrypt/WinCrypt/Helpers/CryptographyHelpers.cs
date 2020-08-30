@@ -3,10 +3,11 @@
     // Required namespaces
     using System;
     using System.IO;
-    using System.Security;
-    using System.Security.Cryptography;
     using System.Text;
+    using System.Security;
     using System.Threading.Tasks;
+    using System.Security.Cryptography;
+    using System.Threading;
     using System.Windows;
 
     /// <summary>
@@ -19,7 +20,7 @@
         /// <summary>
         /// The memory buffer to use when preforming cryptograpgic operations
         /// </summary>
-        public static int MemoryBuffer { get; set; } = 10000000;
+        public static int MemoryBuffer { get; set; } = 250000000;
 
         #endregion
 
@@ -74,12 +75,17 @@
         /// <param name="pass">The hashed password to use for encryption</param>
         /// <param name="DeleteOriginalFile">True if the original file should be deleted after encryption</param>
         /// <returns></returns>
-        public static async Task<CryptographicResult> EncryptFileAES(
+        public static async Task<CryptographicResult> EncryptFileAsync(
             string filePath, 
             string newFilePath,
             SecureString pass, 
-            bool DeleteOriginalFile = true) {
+            bool DeleteOriginalFile,
+            CancellationToken cancelToken) {
             // Try to encrypt the file
+
+            // Create the new file string
+            string newFile = @$"{newFilePath}.encrypted";
+
             try
             {
                 // Placeholders for the iv
@@ -97,9 +103,7 @@
                     AES.Mode    = CipherMode.CBC;
                     AES.Padding = PaddingMode.PKCS7;
                     AES.Key = HashSecureStringSHA256(pass);
-                    AES.IV  = IV;
-                    // Create the new file string
-                    string newFile = @$"{newFilePath}.encrypted";                
+                    AES.IV  = IV;            
 
                     using (FileStream Reader   = new FileStream(filePath, FileMode.Open, FileAccess.Read))
                     using (FileStream Writer   = new FileStream(newFile, FileMode.Create, FileAccess.Write))
@@ -115,13 +119,13 @@
                             using (Stream s = File.OpenRead(filePath))
                                 // Comnpute checksum
                                 return Task.FromResult(md5.ComputeHash(s));
-                        });
+                        }, cancelToken);
 
                         // Save the checksum in the file
-                        await Writer.WriteAsync(Checksum);
+                        await Writer.WriteAsync(Checksum, cancelToken);
 
                         // Write the IV to the begining of the file
-                        await Writer.WriteAsync(IV);
+                        await Writer.WriteAsync(IV, cancelToken);
 
                         // Send encryption information
                         EncryptionInfo(null, "Encrypting...");
@@ -132,12 +136,12 @@
                             byte[] bytes = new byte[MemoryBuffer];
 
                             // Read 512 bytes or the amount of bytes that are left
-                            int read = await Reader.ReadAsync(bytes, 0, (Reader.Position + MemoryBuffer <= Reader.Length) ? MemoryBuffer : (int)(Reader.Length - Reader.Position));
+                            int read = await Reader.ReadAsync(bytes, 0, (Reader.Position + MemoryBuffer <= Reader.Length) ? MemoryBuffer : (int)(Reader.Length - Reader.Position), cancelToken);
                             // Resize the array if it is the last byte packet
                             if (read != MemoryBuffer) Array.Resize(ref bytes, read);
 
                             // Copy the read byte over to the cryptostream
-                            await Stream.WriteAsync(bytes);
+                            await Stream.WriteAsync(bytes, cancelToken);
 
                             // Call update event
                             EncryptionProgress(null, Writer.Length - 32);
@@ -152,6 +156,20 @@
                 // Return a True result
                 return new CryptographicResult();
             }
+            // If the encryption was canceled
+            catch(OperationCanceledException)
+            {
+                // Remove the file
+                File.Delete(newFile);
+
+                // Send encryption information
+                EncryptionInfo(null, "Encryption Canceled");
+                // Call update event
+                EncryptionProgress(null, 0);
+
+                // Return a false result
+                return new CryptographicResult() { Error = ErrorTypes.OperationCanceled };
+            }
             catch (FileNotFoundException)
             {
                 // Return a false result
@@ -162,9 +180,8 @@
                 // Return a false result
                 return new CryptographicResult() { Error = ErrorTypes.DirectoryNotFound };
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MessageBox.Show(ex.Message);
                 return new CryptographicResult() { Error = ErrorTypes.DirectoryNotFound };
             }
         }
@@ -178,9 +195,13 @@
         public static async Task<CryptographicResult> DecryptFileAES(
             string filePath, 
             SecureString pass,
-            bool DeleteOriginalFile = true) {
+            bool DeleteOriginalFile,
+            CancellationToken cancelToken) {
             // If this is not empty in a catch then the file was created so remove it
             string newFile = String.Empty;
+
+            // Create the new file string
+            newFile = @$"{new FileInfo(filePath).DirectoryName}\{Path.GetFileNameWithoutExtension(filePath)}";
 
             // Try to decryption the file
             try
@@ -200,37 +221,53 @@
                         byte[] IV = new byte[16];
                         byte[] Signature = new byte[16];
                         // Read the signature from the file
-                        Reader.Read(Signature, 0, 16);
+                        await Reader.ReadAsync(Signature, 0, 16, cancelToken);
                         // Read the IV from the file
-                        Reader.Read(IV, 0, 16);
+                        await Reader.ReadAsync(IV, 0, 16, cancelToken);
                         // Set the IV
                         AES.IV = IV;
-                        // Create the new file string
-                        newFile = @$"{new FileInfo(filePath).DirectoryName}\{Path.GetFileNameWithoutExtension(filePath)}";
 
-                        using (FileStream Writer = new FileStream(newFile, FileMode.Create, FileAccess.Write))
-                        using (CryptoStream Stream = new CryptoStream(Writer, AES.CreateDecryptor(), CryptoStreamMode.Write))
+                        // Can fail because of the cancellation token
+                        try
                         {
-                            // Send decryption message
-                            DecryptionInfo(null, "Decrypting...");
-
-                            // Keep reading bytes until the end of the file is hit
-                            while (Reader.Position != Reader.Length)
+                            // Open up a file writer and a crypto stream
+                            using (FileStream Writer = new FileStream(newFile, FileMode.Create, FileAccess.Write))
+                            using (CryptoStream Stream = new CryptoStream(Writer, AES.CreateDecryptor(), CryptoStreamMode.Write))
                             {
-                                // Placeholder for the decrypted bytes
-                                byte[] bytes = new byte[MemoryBuffer];
+                                // Send decryption message
+                                DecryptionInfo(null, "Decrypting...");
 
-                                // Read bytes from input file
-                                int read = await Reader.ReadAsync(bytes, 0, (Reader.Position + MemoryBuffer <= Reader.Length) ? MemoryBuffer : (int)(Reader.Length - Reader.Position));
-                                // Resize the array if it is the last byte packet
-                                if (read != MemoryBuffer) Array.Resize(ref bytes, read);
+                                // Keep reading bytes until the end of the file is hit
+                                while (Reader.Position != Reader.Length)
+                                {
+                                    // Placeholder for the decrypted bytes
+                                    byte[] bytes = new byte[MemoryBuffer];
 
-                                // Copy bytes to decryption stream
-                                await Stream.WriteAsync(bytes);
+                                    // Read bytes from input file
+                                    int read = await Reader.ReadAsync(bytes, 0, (Reader.Position + MemoryBuffer <= Reader.Length) ? MemoryBuffer : (int)(Reader.Length - Reader.Position), cancelToken);
+                                    // Resize the array if it is the last byte packet
+                                    if (read != MemoryBuffer) Array.Resize(ref bytes, read);
 
-                                // Send progress update
-                                DecryptionProgress(null, Writer.Length);
+                                    // Copy bytes to decryption stream
+                                    await Stream.WriteAsync(bytes, cancelToken);
+
+                                    // Send progress update
+                                    DecryptionProgress(null, Writer.Length);
+                                }
                             }
+                        }
+                        // We must check if the exception was caught because the decryption was canceled or 
+                        // because there was a problem with the decryption
+                        catch
+                        {
+                            // If the exception was caught because the operation was canceled...
+                            if (cancelToken.IsCancellationRequested) 
+                                // Throw a operation canceled exception instead of a cryptographic exception
+                                throw new OperationCanceledException();
+                            // Else...
+                            else 
+                                // Just throw a cryptographic exception
+                                throw new CryptographicException();
                         }
 
                         // Send decryption message
@@ -245,7 +282,7 @@
                             using (Stream s = File.OpenRead(newFile))
                                 // Return the computed hash
                                 return md5.ComputeHash(s);
-                        });
+                        }, cancelToken);
 
                         // Compare the 2 signatures
                         if (Convert.ToBase64String(DecryptedSingature).CompareTo(Convert.ToBase64String(Signature)) != 0)
@@ -261,8 +298,22 @@
                 // Return a True result
                 return new CryptographicResult();
             }
-            // If decryption fails...
-            catch (CryptographicException E)
+            // If the decryption process was canceled
+            catch(OperationCanceledException)
+            {
+                // Remove the decryption file
+                File.Delete(newFile);
+
+                // Send progress update
+                DecryptionProgress(null, 0);
+                // Send canceled complete message
+                DecryptionInfo(null, "Decryption canceled");
+
+                // Return a false result
+                return new CryptographicResult() { Error = ErrorTypes.OperationCanceled };
+            }
+            //If decryption fails...
+            catch (CryptographicException)
             {
                 // Delete the created file
                 if (!String.IsNullOrEmpty(newFile)) File.Delete(newFile);

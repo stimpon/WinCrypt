@@ -6,9 +6,16 @@
     <ApplicationIcon>encrypt_aus_icon.ico</ApplicationIcon>
     <UseWPF>true</UseWPF>
   </PropertyGroup>
+  
+  <ItemGroup>
+    <None Remove="Views\Images\Encrypt_aud_icon_large.png" />
+  </ItemGroup>
 
   <ItemGroup>
     <Resource Include="Views/Images/encrypt_aus_icon.ico">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Views\Images\Encrypt_aud_icon_large.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Resource>
   </ItemGroup>

@@ -8,6 +8,7 @@
     using System;
     using static CryptographyHelpers;
     using System.Threading.Tasks;
+    using System.Threading;
 
     /// <summary>
     /// ViewModel for the <see cref="MainPage"/>
@@ -42,7 +43,11 @@
         public string DecryptionInformation { get; set; } = String.Empty;
 
         /// <summary>
-        /// Tells the view if a file is being decrypted right now
+        /// Is the program encrypting a file right now?
+        /// </summary>
+        public bool IsDecrypting { get; set; } = false;
+        /// <summary>
+        /// Tells the View if a file is being encrypted right now
         /// </summary>
         public bool Idling { get; set; } = true;
 
@@ -53,7 +58,16 @@
         /// <summary>
         /// Command for encrypting the file
         /// </summary>
-        public ICommand DecryptCommand { get; set; }
+        public ICommand DecryptCancelCommand { get; set; }
+
+        #endregion
+
+        #region Private members
+
+        /// <summary>
+        /// Token for canceloing the decryption task
+        /// </summary>
+        private CancellationTokenSource Token;
 
         #endregion
 
@@ -72,24 +86,41 @@
         #region Command functions
 
         /// <summary>
-        /// Function for the <see cref="DecryptCommand"/> command
+        /// Function for the <see cref="DecryptCancelCommand"/> command
         /// </summary>
         /// <param name="o"></param>
-        private async void DecryptFile(object o)
+        private async void DecryptCancelCommand_Function(object o)
         {
-            // Turn on decryption mode
-            Idling = false;
+            // If a file is being decrypted...
+            if (!IsDecrypting)
+            {
+                // Turn on decryption mode
+                IsDecrypting = true;
 
-            // Set the file size
-            FileSize = new FileInfo(CurrentFile).Length;
+                // Set the file size
+                FileSize = new FileInfo(CurrentFile).Length;
 
-            // Create hasher for the password
-            SHA256 Hasher = SHA256.Create();
-            // Encrypt the file
-            var res = await DecryptFileAES(CurrentFile, ((IHavePassword)o).Password);
+                // Create the cancellation token source
+                Token = new CancellationTokenSource();
 
-            // Handle the recieved result
-            HandleDecryptResult(res);
+                // Encrypt the file
+                var res = await DecryptFileAES(CurrentFile, ((IHavePassword)o).Password, DeleteOriginalFile, Token.Token);
+
+                // Handle the recieved result
+                HandleDecryptResult(res);
+            }
+            // Else...
+            else
+            {
+                // Set state to busy
+                Idling = false;
+
+                // Show user that the decryption is being canceled
+                DecryptionInformation = "Canceling...";
+
+                // Cancel the decryption operation
+                Token.Cancel();
+            }
         }
 
         #endregion
@@ -107,7 +138,7 @@
             DecryptionInfo += DecryptPageViewModel_DecryptionInfo;
 
             // Create and bind the Decrypt command to it's function
-            DecryptCommand = new ParameterizedRelayCommand(DecryptFile);
+            DecryptCancelCommand = new ParameterizedRelayCommand(DecryptCancelCommand_Function);
         }
 
         /// <summary>
@@ -127,10 +158,15 @@
                     ErrorTypes.WrongDecryptionKey => "Invalid decryption key or corrupted file",
                     ErrorTypes.FileNotFound => "Could not find file: " + CurrentFile,
                     ErrorTypes.DirectoryNotFound => "Directory does not exist: " + CurrentFile,
+                    ErrorTypes.OperationCanceled => "Decryption canceled",
                     _ => String.Empty
                 };
                 // Turn off decryption mode
-                Idling = true;
+                IsDecrypting = false;
+                // If the decryption was canceled
+                if (dr.Error.Equals(ErrorTypes.OperationCanceled))
+                    // turn on idle state
+                    Idling = true;
             }
             // Exit if there was no problems
             else 

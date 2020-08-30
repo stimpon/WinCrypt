@@ -21,6 +21,8 @@
             <RowDefinition Height="50"/>
         </Grid.RowDefinitions>
 
+        <Image Source="pack://application:,,,/Views/Images/Encrypt_aud_icon_large.png" HorizontalAlignment="Right" Margin="0,15,15,0" Grid.RowSpan="2"/>
+
         <StackPanel>
             <TextBlock Text="File name" VerticalAlignment="Bottom" Width="350" HorizontalAlignment="Center" Margin="0,10,0,0"/>
             <!-- File path and name textbox-->
@@ -29,7 +31,7 @@
                  Grid.Row="1"/>
         </StackPanel>
 
-        <Border Grid.Row="1" Background="#FFF0F0F0" Margin="0,10,0,10">
+        <Border Grid.Row="1" Background="#AAF0F0F0" Margin="0,10,0,10">
             <GroupBox Header="Decryption algorithm" Height="80" Width="350" BorderThickness="0">
                 <Grid Margin="10">
                     <Grid.RowDefinitions>
@@ -49,7 +51,7 @@
                 </Grid>
             </GroupBox>
         </Border>
-        <Border Grid.Row="2" Background="#FFF0F0F0" Margin="0,10,0,10">
+        <Border Grid.Row="2" Background="#AAF0F0F0" Margin="0,10,0,10">
             <GroupBox Grid.Row="2" Width="350" HorizontalAlignment="Center" Header="Options" Height="80" VerticalAlignment="Center" BorderThickness="0">
                 <Grid Margin="10">
                     <Grid.RowDefinitions>
@@ -65,7 +67,7 @@
             </GroupBox>
         </Border>
 
-        <Border Grid.Row="3" Background="#FFF0F0F0" Margin="0,10,0,0" Grid.RowSpan="2"/>
+        <Border Grid.Row="3" Background="#AAF0F0F0" Margin="0,10,0,0" Grid.RowSpan="2"/>
 
         <StackPanel Grid.Row="3">
             <TextBlock Width="350" Height="16" VerticalAlignment="Bottom" Margin="0,10,0,0"><Run Language="sv-se" Text="De"/><Run Text="cryption "/><Run Text="key"/></TextBlock>
@@ -75,16 +77,16 @@
 
         <TextBlock Grid.Row="4" Text="{Binding DecryptionInformation}" Width="350" Foreground="Black" TextAlignment="Right" FontFamily="Consolas" FontSize="12" VerticalAlignment="Center"/>
 
-        <Button Grid.Row="5" Background="#FFF0F0F0" Content="Decrypt" 
+        <Button Grid.Row="5" Background="#FFF0F0F0" Content="{Binding IsDecrypting, Converter={local:BoolToOperationConverter}, ConverterParameter=1}" 
                 Width="350" Height="25" VerticalAlignment="Bottom"
-                Command="{Binding DecryptCommand}" CommandParameter="{Binding ElementName=Page}" IsEnabled="{Binding Idling}"/>
+                Command="{Binding DecryptCancelCommand}" CommandParameter="{Binding ElementName=Page}" IsEnabled="{Binding Idling}"/>
 
         <ProgressBar Grid.Row="6" Height="25" Width="350" Value="{Binding DecryptedBytes}" Maximum="{Binding FileSize}" Minimum="0"
                      Margin="0,10,0,0"  BorderBrush="#FFF0F0F0" Background="#FFFBFBFB"/>
         
         <Border Grid.Row="6" Margin="0,10,10,0" Height="25" Width="340" VerticalAlignment="Center">
             <TextBlock  Width="340" TextAlignment="Right" 
-                        Visibility="{Binding Idling, Converter={local:ReverseBoolToVisibilityConverter}}"
+                        Visibility="{Binding IsDecrypting, Converter={local:BoolToVisibilityConverter}}"
                         VerticalAlignment="Center" FontFamily="Consolas" FontSize="12">
             <Run Text="{Binding DecryptedBytes}"/><Run Text="b"/>
             <Run Text="/"/>
