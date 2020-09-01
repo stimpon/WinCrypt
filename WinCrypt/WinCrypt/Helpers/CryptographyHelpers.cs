@@ -109,21 +109,6 @@
                     using (FileStream Writer   = new FileStream(newFile, FileMode.Create, FileAccess.Write))
                     using (CryptoStream Stream = new CryptoStream(Writer, AES.CreateEncryptor(), CryptoStreamMode.Write))
                     {
-                        // Send encryption information
-                        EncryptionInfo(null, "Computing MD5 checksum...");
-
-                        // Calculate the MD5 checksum of the file
-                        var Checksum = await Task.Run(() => {
-                            // Create a MD5 hasher
-                            using (MD5 md5 = MD5.Create())
-                            using (Stream s = File.OpenRead(filePath))
-                                // Comnpute checksum
-                                return Task.FromResult(md5.ComputeHash(s));
-                        }, cancelToken);
-
-                        // Save the checksum in the file
-                        await Writer.WriteAsync(Checksum, cancelToken);
-
                         // Write the IV to the begining of the file
                         await Writer.WriteAsync(IV, cancelToken);
 
@@ -144,7 +129,7 @@
                             await Stream.WriteAsync(bytes, cancelToken);
 
                             // Call update event
-                            EncryptionProgress(null, Writer.Length - 32);
+                            EncryptionProgress(null, Writer.Length - 16);
                         }
                     }
                     // If the original file should be deleted...
@@ -219,9 +204,6 @@
                     {
                         // Create a new placeholder for the IV
                         byte[] IV = new byte[16];
-                        byte[] Signature = new byte[16];
-                        // Read the signature from the file
-                        await Reader.ReadAsync(Signature, 0, 16, cancelToken);
                         // Read the IV from the file
                         await Reader.ReadAsync(IV, 0, 16, cancelToken);
                         // Set the IV
@@ -269,24 +251,6 @@
                                 // Just throw a cryptographic exception
                                 throw new CryptographicException();
                         }
-
-                        // Send decryption message
-                        DecryptionInfo(null, "Comparing MD5 checksum...");
-
-                        // Todo: Compare signatures to make sure the encryption was successful      
-                        // Get hash from the decrypted file
-                        var DecryptedSingature = await Task.Run(() =>
-                        {
-                            // Create a new MD5 hasher
-                            using (MD5 md5 = MD5.Create())
-                            using (Stream s = File.OpenRead(newFile))
-                                // Return the computed hash
-                                return md5.ComputeHash(s);
-                        }, cancelToken);
-
-                        // Compare the 2 signatures
-                        if (Convert.ToBase64String(DecryptedSingature).CompareTo(Convert.ToBase64String(Signature)) != 0)
-                            throw new CryptographicException();
 
                     }
                     // If the original file should be deleted
