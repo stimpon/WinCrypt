@@ -26,8 +26,8 @@
         <StackPanel>
             <TextBlock Text="File name" VerticalAlignment="Bottom" Width="350" HorizontalAlignment="Center" Margin="0,10,0,0"/>
             <!-- File path and name textbox-->
-            <TextBox IsReadOnly="True" Height="20" Width="350" HorizontalAlignment="Center"
-                 Text="{Binding CurrentFile, Mode=TwoWay}"
+            <TextBox IsReadOnly="False" Height="20" Width="350" HorizontalAlignment="Center"
+                 Text="{Binding CurrentFileName, Mode=TwoWay}"
                  Grid.Row="1"/>
         </StackPanel>
 

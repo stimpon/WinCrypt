@@ -20,7 +20,17 @@
         /// <summary>
         /// The current file opened
         /// </summary>
-        public string CurrentFile { get; set; }
+        public string CurrentFileName { get; set; }
+
+        /// <summary>
+        /// Gets or sets the current file path.
+        /// </summary>
+        public string CurrentFilePath { get; set; }
+
+        /// <summary>
+        /// Gets or sets the name of the original file.
+        /// </summary>
+        public string OriginalFileName { get; set; }
 
         /// <summary>
         /// Set to true if the original file should be kept after encryption
@@ -98,13 +108,14 @@
                 IsDecrypting = true;
 
                 // Set the file size
-                FileSize = new FileInfo(CurrentFile).Length;
+                FileSize = new FileInfo(OriginalFileName).Length;
 
                 // Create the cancellation token source
                 Token = new CancellationTokenSource();
 
                 // Encrypt the file
-                var res = await DecryptFileAES(CurrentFile, ((IHavePassword)o).Password, DeleteOriginalFile, Token.Token);
+                var res = await DecryptFileAES(OriginalFileName, @$"{CurrentFilePath}\{CurrentFileName}",
+                    ((IHavePassword)o).Password, DeleteOriginalFile, Token.Token);
 
                 // Handle the recieved result
                 HandleDecryptResult(res);
@@ -156,9 +167,9 @@
                     // Print out message depending on what the error is
 
                     ErrorTypes.WrongDecryptionKey => "Invalid decryption key or corrupted file",
-                    ErrorTypes.FileNotFound => "Could not find file: " + CurrentFile,
-                    ErrorTypes.DirectoryNotFound => "Directory does not exist: " + CurrentFile,
-                    ErrorTypes.OperationCanceled => "Decryption canceled",
+                    ErrorTypes.FileNotFound       => "Could not find file: " + CurrentFileName,
+                    ErrorTypes.DirectoryNotFound  => "Directory does not exist: " + CurrentFileName,
+                    ErrorTypes.OperationCanceled  => "Decryption canceled",
                     _ => String.Empty
                 };
                 // Turn off decryption mode

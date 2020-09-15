@@ -33,7 +33,7 @@
         /// <summary>
         /// Can be subscibed to to recieve encryption information
         /// </summary>
-        public static event EventHandler<string> EncryptionInfo= delegate { };
+        public static event EventHandler<string> EncryptionInfo = delegate { };
 
         #endregion
 
@@ -72,7 +72,7 @@
         /// Encrypt the specified file
         /// </summary>
         /// <param name="filePath">Path to the file</param>
-        /// <param name="pass">The hashed password to use for encryption</param>
+        /// <param name="pass">the encryption key</param>
         /// <param name="DeleteOriginalFile">True if the original file should be deleted after encryption</param>
         /// <returns></returns>
         public static async Task<CryptographicResult> EncryptFileAsync(
@@ -179,14 +179,10 @@
         /// <param name="encryptionIV">The full filepath to the encryption iv.</param>
         public static async Task<CryptographicResult> DecryptFileAES(
             string filePath, 
+            string newFileName,
             SecureString pass,
             bool DeleteOriginalFile,
             CancellationToken cancelToken) {
-            // If this is not empty in a catch then the file was created so remove it
-            string newFile = String.Empty;
-
-            // Create the new file string
-            newFile = @$"{new FileInfo(filePath).DirectoryName}\{Path.GetFileNameWithoutExtension(filePath)}";
 
             // Try to decryption the file
             try
@@ -213,7 +209,7 @@
                         try
                         {
                             // Open up a file writer and a crypto stream
-                            using (FileStream Writer = new FileStream(newFile, FileMode.Create, FileAccess.Write))
+                            using (FileStream Writer = new FileStream(newFileName, FileMode.Create, FileAccess.Write))
                             using (CryptoStream Stream = new CryptoStream(Writer, AES.CreateDecryptor(), CryptoStreamMode.Write))
                             {
                                 // Send decryption message
@@ -266,7 +262,7 @@
             catch(OperationCanceledException)
             {
                 // Remove the decryption file
-                File.Delete(newFile);
+                File.Delete(newFileName);
 
                 // Send progress update
                 DecryptionProgress(null, 0);
@@ -280,7 +276,7 @@
             catch (CryptographicException)
             {
                 // Delete the created file
-                if (!String.IsNullOrEmpty(newFile)) File.Delete(newFile);
+                if (!String.IsNullOrEmpty(newFileName)) File.Delete(newFileName);
                 // Send progress update
                 DecryptionProgress(null, 0);
                 // Return a false result
@@ -289,7 +285,7 @@
             catch (FileNotFoundException)
             {
                 // Delete the created file
-                if (!String.IsNullOrEmpty(newFile)) File.Delete(newFile);
+                if (!String.IsNullOrEmpty(newFileName)) File.Delete(newFileName);
                 // Send progress update
                 DecryptionProgress(null, 0);
                 // Return a false result
@@ -298,7 +294,7 @@
             catch (DirectoryNotFoundException)
             {
                 // Delete the created file
-                if (!String.IsNullOrEmpty(newFile)) File.Delete(newFile);
+                if (!String.IsNullOrEmpty(newFileName)) File.Delete(newFileName);
                 // Send progress update
                 DecryptionProgress(null, 0);
                 // Return a false result

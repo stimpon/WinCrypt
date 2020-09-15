@@ -1,15 +1,12 @@
 ﻿namespace WinCrypt
 {
-    // Required namespaces >>
+    // Required namespaces
     using System;
     using System.IO;
-    using System.Text;
-    using System.Windows.Input;
-    using System.Security.Cryptography;
-    using static CryptographyHelpers;
-    using System.Threading.Tasks;
-    using System.Windows;
     using System.Threading;
+    using System.Windows.Input;
+    using System.Threading.Tasks;
+    using static CryptographyHelpers;
 
     /// <summary>
     /// ViewModel for the <see cref="EncryptFileAES(string, byte[], bool)"/>

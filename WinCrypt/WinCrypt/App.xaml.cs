@@ -58,8 +58,11 @@
                         Container.ApplicationViewModel.CurrentPage = ApplicationPages.DecryptPage;
                         // Bind a new constant instance of the DecryptPageViewModel to the application kernel
                         Container.ApplicationKernel.Bind<DecryptPageViewModel>().ToConstant(new DecryptPageViewModel());
-                        // Pass the opened file
-                        Container.Get<DecryptPageViewModel>().CurrentFile = e.Args[0];
+                        
+                        // Set file properties
+                        Container.Get<DecryptPageViewModel>().CurrentFilePath  = Path.GetDirectoryName(e.Args[0]);
+                        Container.Get<DecryptPageViewModel>().CurrentFileName  = Path.GetFileNameWithoutExtension(e.Args[0]);
+                        Container.Get<DecryptPageViewModel>().OriginalFileName = e.Args[0];
                         break;
 
                     // Invalid mode was passed
